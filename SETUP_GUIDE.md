@@ -1,140 +1,184 @@
-# AI Information Display Expert - Installation & Setup Guide
+# AI Agent Backend Setup Guide
 
-> **Language**: [English](SETUP_GUIDE.md) | [中文](SETUP_GUIDE_ZH.md)  
-> **Main Documentation**: [English](README.md) | [中文](README_ZH.md)
-
-This is a complete backend MVP implementation that includes all core features: multi-source search, AI analysis, HTML report generation, and more.
+This guide will help you set up the AI Agent Backend Enhancement system from scratch.
 
 ## 📋 Prerequisites
 
-### 1. System Environment
+### System Requirements
+- **Operating System**: Linux, macOS, or Windows 10+
+- **Node.js**: Version 18.0 or higher
+- **MongoDB**: Version 4.4 or higher
+- **Memory**: At least 2GB RAM available
+- **Storage**: 10GB free disk space
 
-- **Node.js**: 18.0+ (recommended 18.17.0+)
-- **MongoDB**: 5.0+ 
-- **Operating System**: macOS, Linux, Windows
+### Required API Keys
+- **Google Gemini API Key**: For AI analysis and content generation
+- **Google Search API Key**: For web search functionality
+- **Google Custom Search Engine ID**: For search customization
 
-### 2. API Keys Preparation
+## 🚀 Installation Steps
 
-#### Required API Keys
-- **Google Gemini API Key**: [Get it here](https://ai.google.dev/)
+### Step 1: Environment Setup
 
-#### Optional API Keys (for enhanced search functionality)
-- **Google Custom Search API**: [Get it here](https://developers.google.com/custom-search/v1/introduction)
-# - **Bing Search API**: [Get it here](https://www.microsoft.com/en-us/bing/apis/bing-web-search-api) (removed)
+1. **Install Node.js**
+   ```bash
+   # Using Node Version Manager (recommended)
+   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+   nvm install 18
+   nvm use 18
+   
+   # Or download from https://nodejs.org/
+   ```
 
-> Note: Even without Google API key, the system will still work normally using Wikipedia as a search source.
+2. **Install MongoDB**
+   ```bash
+   # Ubuntu/Debian
+   sudo apt-get update
+   sudo apt-get install -y mongodb
+   
+   # macOS (using Homebrew)
+   brew tap mongodb/brew
+   brew install mongodb-community
+   
+   # Start MongoDB service
+   sudo systemctl start mongod  # Linux
+   brew services start mongodb-community  # macOS
+   ```
 
-## 🚀 Quick Start Steps
+3. **Verify Installation**
+   ```bash
+   node --version    # Should show v18.x.x
+   npm --version     # Should show 9.x.x or higher
+   mongod --version  # Should show MongoDB server version
+   ```
 
-### 1. Install Dependencies
+### Step 2: Project Setup
 
-```bash
-npm install
-```
+1. **Clone Repository**
+   ```bash
+   git clone <repository-url>
+   cd ai-agent
+   ```
 
-### 2. Create Environment Variables File
+2. **Install Dependencies**
+   ```bash
+   npm install
+   ```
 
-Create a `.env` file in the project root directory:
+3. **Create Environment Configuration**
+   ```bash
+   cp .env.example .env
+   ```
 
-```bash
-# Database Configuration
-MONGODB_URI=mongodb://localhost:27017/ai-information-expert
+4. **Edit Environment Variables**
+   ```bash
+   nano .env  # or use your preferred editor
+   ```
 
-# AI Model Configuration (Required)
-GOOGLE_GEMINI_API_KEY=your_gemini_api_key_here
+   Configure the following variables:
+   ```env
+   # Server Configuration
+   PORT=3001
+   NODE_ENV=development
+   
+   # Database
+   MONGODB_URI=mongodb://localhost:27017/ai-agent
+   
+   # Google Gemini API
+   GEMINI_API_KEY=your_gemini_api_key_here
+   
+   # Google Search API
+   GOOGLE_API_KEY=your_google_api_key_here
+   GOOGLE_CX=your_custom_search_engine_id_here
+   
+   # MCP Configuration (optional)
+   MCP_SERVER_URL=http://localhost:3000
+   ```
 
-# Search API Configuration (Optional)
-GOOGLE_SEARCH_API_KEY=your_google_search_api_key
-GOOGLE_SEARCH_ENGINE_ID=your_search_engine_id
-# BING_SEARCH_API_KEY=your_bing_search_api_key (removed)
+### Step 3: API Key Configuration
 
-# Server Configuration
-PORT=3001
-NODE_ENV=development
+#### Google Gemini API Key
 
-# Other Configuration
-LOG_LEVEL=info
-```
+1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Sign in with your Google account
+3. Create a new API key
+4. Copy the key and add it to your `.env` file
 
-### 3. Start MongoDB
+#### Google Search API Key
 
-#### Method 1: Using Docker (Recommended)
-```bash
-docker run -d -p 27017:27017 --name mongodb mongo:latest
-```
-
-#### Method 2: Local Installation
-```bash
-# macOS (using Homebrew)
-brew tap mongodb/brew
-brew install mongodb-community
-brew services start mongodb/brew/mongodb-community
-
-# Ubuntu/Debian
-sudo apt update
-sudo apt install mongodb
-sudo systemctl start mongod
-
-# CentOS/RHEL
-sudo yum install mongodb-org
-sudo systemctl start mongod
-```
-
-### 4. Start Development Server
-
-```bash
-npm run dev
-```
-
-The server will start at `http://localhost:3001`.
-
-### 5. Verify Installation
-
-```bash
-# Check health status
-curl http://localhost:3001/api/health
-
-# Run complete API tests
-npm run test:api
-```
-
-## 🔧 Detailed Configuration
-
-### MongoDB Configuration
-
-Default connection to local MongoDB instance:
-- **URL**: `mongodb://localhost:27017/ai-information-expert`
-- **Database Name**: `ai-information-expert`
-
-To connect to remote MongoDB:
-```bash
-MONGODB_URI=mongodb://username:password@host:port/database_name
-```
-
-### Gemini API Configuration
-
-1. Visit [Google AI Studio](https://ai.google.dev/)
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project or select an existing one
-3. Enable the Generative AI API
-4. Create an API key
-5. Set the API key as an environment variable
+3. Enable the Custom Search API
+4. Create credentials (API Key)
+5. Copy the API key
 
-### Search API Configuration (Optional)
+#### Google Custom Search Engine ID
 
-#### Google Custom Search
-1. Visit [Google Cloud Console](https://console.cloud.google.com/)
-2. Enable Custom Search API
-3. Create Custom Search Engine: [Click here](https://cse.google.com/)
-4. Get API key and search engine ID
+1. Visit [Google Custom Search](https://cse.google.com/cse/)
+2. Create a new search engine
+3. Configure search settings
+4. Copy the Search Engine ID
 
-# #### Bing Search API (removed)
-# 1. Visit [Azure Portal](https://portal.azure.com/)
-# 2. Create Bing Search resource
-# 3. Get API key
+### Step 4: Database Setup
 
-## 🧪 Testing and Verification
+1. **Start MongoDB**
+   ```bash
+   # Linux
+   sudo systemctl start mongod
+   
+   # macOS
+   brew services start mongodb-community
+   
+   # Windows
+   net start MongoDB
+   ```
 
-### 1. Basic Health Check
+2. **Verify Database Connection**
+   ```bash
+   mongo --eval "db.runCommand({connectionStatus: 1})"
+   ```
+
+3. **Create Database Indexes** (optional)
+   ```bash
+   node -e "
+   const mongoose = require('mongoose');
+   mongoose.connect('mongodb://localhost:27017/ai-agent');
+   // Database will be created automatically when first used
+   "
+   ```
+
+### Step 5: Directory Structure Setup
+
+1. **Create Required Directories**
+   ```bash
+   mkdir -p public/screenshots
+   mkdir -p reports/markdown
+   mkdir -p logs
+   ```
+
+2. **Set Permissions**
+   ```bash
+   chmod 755 public/screenshots
+   chmod 755 reports/markdown
+   chmod 755 logs
+   ```
+
+## 🧪 Testing Installation
+
+### Step 1: Start the Server
+
+```bash
+npm start
+```
+
+You should see output similar to:
+```
+Server starting on port 3001
+MongoDB connected successfully
+AI Information Expert Server is running on http://localhost:3001
+```
+
+### Step 2: Run Health Check
 
 ```bash
 curl http://localhost:3001/api/health
@@ -143,155 +187,321 @@ curl http://localhost:3001/api/health
 Expected response:
 ```json
 {
-  "success": true,
+  "status": "healthy",
   "data": {
-    "status": "healthy",
+    "status": "operational",
+    "timestamp": "2025-01-07T12:00:00.000Z",
     "services": {
       "database": "healthy",
       "gemini": "healthy",
-      "search": {
-        "wikipedia": "healthy"
-      }
+      "search": "healthy"
     }
   }
 }
 ```
 
-### 2. Create Test Search
+### Step 3: Run Test Suite
 
 ```bash
-curl -X POST http://localhost:3001/api/search \
-  -H "Content-Type: application/json" \
-  -d '{
-    "topic": "Current status of artificial intelligence development",
-    "language": "en",
-    "maxResults": 5,
-    "sources": ["wikipedia"]
-  }'
+node scripts/test-final.js
 ```
 
-### 3. Run Complete Test Suite
+Expected output:
+```
+🚀 Starting comprehensive functionality test...
 
-```bash
-npm run test:api
+1. Health check...
+✅ Server health status: operational
+
+2. Starting multi-round search...
+✅ Search started, report ID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+
+3. Waiting for search completion...
+✅ Search completed successfully
+
+4. Testing HTML generation...
+✅ HTML report generated (6000+ characters)
+
+5. Testing Markdown download...
+✅ Markdown report downloaded (3000+ characters)
+
+6. Testing screenshot API...
+✅ Screenshot API working
+
+7. Testing report listing...
+✅ Report listing working (6 reports)
+
+🎉 All tests passed! System is ready for use.
 ```
 
-This will run a series of integration tests to verify:
-- Search creation and execution
-- AI analysis processing
-- HTML report generation
-- Data persistence
+## 🔧 Configuration Options
 
-## 📂 Project Structure
+### Server Configuration
 
+```javascript
+// src/config/index.js
+module.exports = {
+  server: {
+    port: process.env.PORT || 3001,
+    host: process.env.HOST || '0.0.0.0'
+  },
+  database: {
+    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/ai-agent',
+    options: {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    }
+  },
+  ai: {
+    gemini: {
+      apiKey: process.env.GEMINI_API_KEY,
+      model: 'gemini-2.0-flash-exp',
+      temperature: 0.7
+    }
+  },
+  search: {
+    google: {
+      apiKey: process.env.GOOGLE_API_KEY,
+      cx: process.env.GOOGLE_CX,
+      maxResults: 10
+    }
+  }
+};
 ```
-ai-agent/
-├── src/
-│   ├── config/              # Configuration files
-│   │   ├── connection.js    # MongoDB connection
-│   │   └── models/          # Data models
-│   ├── server/              # Express server
-│   │   ├── index.js         # Main server file
-│   │   └── routes/          # API routes
-│   ├── services/            # Business logic services
-│   │   ├── ai/              # AI services (Gemini)
-│   │   └── search/          # Search services
-│   └── utils/               # Utility functions
-├── scripts/                 # Script files
-├── logs/                    # Log folder
-├── package.json             # Project dependencies
-└── README.md                # Main documentation
+
+### Search Configuration
+
+```javascript
+// Default search options
+const defaultOptions = {
+  maxRounds: 3,              // Number of search rounds
+  maxResultsPerRound: 8,     // Results per round
+  includeScreenshots: true,  // Capture screenshots
+  generateMarkdown: true,    // Generate Markdown report
+  template: 'modern',        // HTML template
+  sources: ['google', 'wikipedia']  // Search sources
+};
 ```
 
-## 🔍 Core API Endpoints
+### Template Configuration
 
-### Search Related
-- `POST /api/search` - Create search task
-- `GET /api/search/:searchId` - Get search results
-- `GET /api/search` - Search history list
-
-### Report Related
-- `POST /api/report` - Generate HTML report
-- `GET /api/report/:reportId` - Get report details
-- `GET /api/report/:reportId/html` - Get HTML content
-- `GET /api/report/:reportId/download` - Download report
-
-### Monitoring Related
-- `GET /api/health` - System health check
-- `GET /api/health/stats` - System statistics
+Available templates:
+- `modern`: Clean, gradient-based design
+- `classic`: Traditional, formal styling
+- `minimal`: Minimalist with lots of whitespace
+- `academic`: Academic paper style with citations
+- `presentation`: Large fonts and visual elements
 
 ## 🚨 Troubleshooting
 
 ### Common Issues
 
-1. **Port 3001 in Use**
-   ```bash
-   # Check port usage
-   lsof -i :3001
-   
-   # Or change port
-   export PORT=3002
-   npm run dev
-   ```
-
-2. **MongoDB Connection Failed**
-   ```bash
-   # Check MongoDB status
-   sudo systemctl status mongod  # Linux
-   brew services list | grep mongo  # macOS
-   ```
-
-3. **Gemini API Error**
-   - Verify API key is correct
-   - Check if API quota is sufficient
-   - Ensure network connection is normal
-
-4. **Search Service Failed**
-   - Wikipedia doesn't need API key, should always be available
-   - If all search sources fail, check network connection
-
-### Log Viewing
-
-```bash
-# View logs in real-time
-tail -f logs/combined.log
-
-# View error logs
-tail -f logs/error.log
-
-# View logs for specific time
-grep "2024-01-01" logs/combined.log
+#### 1. MongoDB Connection Error
+```
+Error: MongoNetworkError: failed to connect to server
 ```
 
-## 🚀 Production Deployment Recommendations
+**Solution:**
+```bash
+# Check if MongoDB is running
+sudo systemctl status mongod
 
-### 1. Environment Variable Security
-- Use environment variables to manage sensitive information
-- Don't commit API keys to version control
+# Start MongoDB if not running
+sudo systemctl start mongod
 
-### 2. Database Optimization
-- Use MongoDB cluster for high availability
-- Configure appropriate indexes to optimize query performance
+# Check MongoDB logs
+sudo journalctl -u mongod
+```
 
-### 3. Monitoring and Logging
-- Set up log rotation to avoid disk space issues
-- Use monitoring tools to track performance metrics
+#### 2. API Key Errors
+```
+Error: Gemini API key is invalid
+```
 
-### 4. Security Considerations
-- Configure firewall to restrict access
-- Use HTTPS for encrypted transmission
-- Implement appropriate rate limiting
+**Solution:**
+- Verify API key is correct in `.env` file
+- Check API key permissions in Google Cloud Console
+- Ensure billing is enabled for your Google Cloud project
 
-## 📞 Getting Help
+#### 3. Port Already in Use
+```
+Error: listen EADDRINUSE: address already in use :::3001
+```
+
+**Solution:**
+```bash
+# Find process using port 3001
+lsof -i :3001
+
+# Kill the process
+kill -9 <process_id>
+
+# Or use a different port
+export PORT=3002
+npm start
+```
+
+#### 4. Permission Denied Errors
+```
+Error: EACCES: permission denied, mkdir '/path/to/screenshots'
+```
+
+**Solution:**
+```bash
+# Fix directory permissions
+sudo chown -R $USER:$USER public/screenshots
+chmod 755 public/screenshots
+```
+
+### Debug Mode
+
+Enable debug logging:
+```bash
+DEBUG=ai-agent:* npm start
+```
+
+### Log Files
+
+Check application logs:
+```bash
+# Application logs
+tail -f logs/app.log
+
+# Error logs
+tail -f logs/error.log
+
+# MongoDB logs
+sudo tail -f /var/log/mongodb/mongod.log
+```
+
+## 🔄 Development Workflow
+
+### Development Mode
+
+```bash
+# Start with auto-reload
+npm run dev
+
+# Run tests in watch mode
+npm run test:watch
+
+# Lint code
+npm run lint
+
+# Format code
+npm run format
+```
+
+### Production Mode
+
+```bash
+# Build for production
+npm run build
+
+# Start in production mode
+NODE_ENV=production npm start
+
+# Use PM2 for process management
+npm install -g pm2
+pm2 start src/server/index.js --name ai-agent
+```
+
+## 📊 Monitoring
+
+### Health Monitoring
+
+```bash
+# Check system health
+curl http://localhost:3001/api/health
+
+# Get detailed statistics
+curl http://localhost:3001/api/health/stats
+```
+
+### Performance Monitoring
+
+```bash
+# Monitor memory usage
+node --inspect src/server/index.js
+
+# Monitor with PM2
+pm2 monit
+```
+
+## 🔐 Security Setup
+
+### Environment Security
+
+```bash
+# Secure .env file
+chmod 600 .env
+
+# Add .env to .gitignore
+echo ".env" >> .gitignore
+```
+
+### Database Security
+
+```javascript
+// Enable MongoDB authentication
+use admin
+db.createUser({
+  user: "admin",
+  pwd: "secure_password",
+  roles: ["userAdminAnyDatabase"]
+})
+```
+
+### API Security
+
+```javascript
+// Add rate limiting
+const rateLimit = require('express-rate-limit');
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+
+app.use('/api', limiter);
+```
+
+## 📈 Performance Optimization
+
+### Node.js Optimization
+
+```bash
+# Increase memory limit
+node --max-old-space-size=4096 src/server/index.js
+
+# Enable production optimizations
+NODE_ENV=production npm start
+```
+
+### Database Optimization
+
+```javascript
+// Create indexes for better performance
+db.reports.createIndex({ "createdAt": -1 })
+db.reports.createIndex({ "status": 1 })
+db.images.createIndex({ "createdAt": -1 })
+```
+
+## 🆘 Support
 
 If you encounter issues:
 
-1. Check this installation guide
-2. Review the project README.md
-3. Run health check to confirm service status
-4. Check log files for detailed error information
-5. Create an Issue to report problems
+1. **Check the logs**: Look at application and system logs
+2. **Verify configuration**: Ensure all environment variables are set correctly
+3. **Test components**: Use the provided test scripts to isolate issues
+4. **Check dependencies**: Ensure all required services are running
+5. **Review documentation**: Check the implementation guide for detailed information
+
+For additional help:
+- Create an issue in the GitHub repository
+- Check the FAQ section
+- Review the troubleshooting guide
 
 ---
 
-**Happy coding!** 🚀 
+**Setup complete!** Your AI Agent Backend Enhancement system is now ready for use. 

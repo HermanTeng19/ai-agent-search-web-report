@@ -36,6 +36,7 @@
     "joi": "^17.11.0",
     "mongoose": "^8.0.3",
     "redis": "^4.6.11",
+    "sharp": "^0.34.2",
     "uuid": "^9.0.1",
     "winston": "^3.11.0"
   },
@@ -57,4 +58,4 @@
     "url": "https://github.com/username/ai-information-display-expert/issues"
   },
   "homepage": "https://github.com/username/ai-information-display-expert#readme"
-} 
+}

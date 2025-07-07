@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 const config = require('../config');
 const logger = require('../utils/logger');
 const connectDB = require('../database/connection');
@@ -10,6 +11,8 @@ const connectDB = require('../database/connection');
 const searchRoutes = require('./routes/search');
 const reportRoutes = require('./routes/report');
 const healthRoutes = require('./routes/health');
+const iterativeSearchRoutes = require('./routes/iterative-search');
+const screenshotRoutes = require('./routes/screenshots');
 
 const app = express();
 
@@ -29,10 +32,15 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
+// 静态文件服务
+app.use('/screenshots', express.static(path.join(__dirname, '../../public/screenshots')));
+
 // 路由配置
 app.use('/api/search', searchRoutes);
 app.use('/api/report', reportRoutes);
 app.use('/api/health', healthRoutes);
+app.use('/api/iterative-search', iterativeSearchRoutes);
+app.use('/api/screenshots', screenshotRoutes);
 
 // 404处理
 app.use('*', (req, res) => {

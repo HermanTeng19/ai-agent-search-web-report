@@ -52,11 +52,12 @@ class GeminiService {
    * 生成HTML报告内容
    * @param {Object} processedContent - 处理后的内容
    * @param {string} template - 模板类型
+   * @param {Array} screenshots - 截图数组
    * @returns {Promise<string>} HTML内容
    */
-  async generateHTMLReport(processedContent, template = 'modern') {
+  async generateHTMLReport(processedContent, template = 'modern', screenshots = []) {
     try {
-      const prompt = this.buildHTMLPrompt(processedContent, template);
+      const prompt = this.buildHTMLPrompt(processedContent, template, screenshots);
       
       logger.info('Starting HTML generation with template:', template);
       const startTime = Date.now();
@@ -137,9 +138,10 @@ ${resultsText}
    * 构建HTML生成提示词
    * @param {Object} processedContent - 处理后的内容
    * @param {string} template - 模板类型
+   * @param {Array} screenshots - 截图数组
    * @returns {string} 提示词
    */
-  buildHTMLPrompt(processedContent, template) {
+  buildHTMLPrompt(processedContent, template, screenshots = []) {
     const templateStyles = {
       modern: '现代简约风格，使用渐变色彩和卡片式布局',
       classic: '经典传统风格，使用传统排版和正式色彩',
@@ -148,10 +150,26 @@ ${resultsText}
       presentation: '演示文稿风格，使用大字体和突出的视觉元素'
     };
 
+    let screenshotSection = '';
+    if (screenshots && screenshots.length > 0) {
+      screenshotSection = `
+
+截图信息:
+${screenshots.map((screenshot, index) => `
+截图 ${index + 1}:
+- 标题: ${screenshot.title || screenshot.url}
+- 网址: ${screenshot.url}
+- 图片URL: ${screenshot.publicUrl}
+- 缩略图URL: ${screenshot.thumbnailUrl}
+- 尺寸: ${screenshot.dimensions ? `${screenshot.dimensions.width}x${screenshot.dimensions.height}` : '未知'}
+- 文件大小: ${screenshot.sizeFormatted || '未知'}
+`).join('')}`;
+    }
+
     return `请基于以下分析内容生成一个美观的HTML页面，风格为${templateStyles[template]}。
 
 分析内容:
-${JSON.stringify(processedContent, null, 2)}
+${JSON.stringify(processedContent, null, 2)}${screenshotSection}
 
 要求:
 1. 生成完整的HTML页面，包含head和body
@@ -162,11 +180,14 @@ ${JSON.stringify(processedContent, null, 2)}
    - 内容摘要
    - 关键要点（使用列表或卡片）
    - 分类详情（使用折叠或标签页）
+   - 截图展示区域（如果有截图）
    - 信息来源（包含链接）
    - 页面底部的生成时间
 5. 使用合适的字体、颜色和布局
 6. 添加适当的图标和视觉元素
 7. 确保内容易于阅读和理解
+8. 如果有截图，请在相应位置展示图片，使用img标签引用publicUrl
+9. 为截图添加适当的说明文字和链接
 
 请直接返回HTML代码，不要包含任何额外的说明文字。`;
   }

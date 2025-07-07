@@ -103,6 +103,55 @@ const reportSchema = new mongoose.Schema({
     message: String,
     code: String,
     details: mongoose.Schema.Types.Mixed
+  },
+  
+  // 多轮搜索信息
+  searchRounds: [{
+    roundNumber: { type: Number, required: true },
+    query: { type: String, required: true },
+    results: [{
+      title: String,
+      url: String,
+      snippet: String,
+      source: String,
+      relevanceScore: Number
+    }],
+    keyFindings: String,
+    nextDirection: String,
+    timestamp: { type: Date, default: Date.now },
+    processingTime: Number
+  }],
+  
+  // 分析结果
+  analysisResult: {
+    summary: String,
+    keyPoints: [String],
+    categories: [{
+      name: String,
+      points: [String]
+    }],
+    sources: [{
+      title: String,
+      url: String,
+      reliability: Number
+    }],
+    confidence: Number
+  },
+  
+  // 截图信息
+  screenshots: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Image'
+  }],
+  
+  // Markdown文档信息
+  markdownReport: {
+    filename: String,
+    path: String,
+    relativePath: String,
+    size: Number,
+    generated: { type: Boolean, default: false },
+    generatedAt: Date
   }
 }, {
   timestamps: true,

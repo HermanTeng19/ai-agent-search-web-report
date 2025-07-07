@@ -1,11 +1,19 @@
 const GoogleSearchService = require('./GoogleSearchService');
 const WikipediaSearchService = require('./WikipediaSearchService');
+const MCPScreenshotService = require('../screenshot/MCPScreenshotService');
+const ImageStorageService = require('../storage/ImageStorageService');
+const MarkdownService = require('../document/MarkdownService');
+const GeminiService = require('../ai/gemini');
 const logger = require('../../utils/logger');
 
 class SearchService {
   constructor() {
     this.googleSearch = new GoogleSearchService();
     this.wikipediaSearch = new WikipediaSearchService();
+    this.screenshotService = new MCPScreenshotService();
+    this.imageStorage = new ImageStorageService();
+    this.markdownService = new MarkdownService();
+    this.geminiService = new GeminiService();
   }
 
   /**
@@ -218,13 +226,230 @@ class SearchService {
   }
 
   /**
+   * 多轮深度搜索
+   * @param {string} topic - 搜索主题
+   * @param {Object} options - 搜索选项
+   * @returns {Promise<Object>} 完整的搜索和分析结果
+   */
+  async iterativeSearch(topic, options = {}) {
+    const {
+      maxRounds = 3,
+      maxResultsPerRound = 8,
+      includeScreenshots = true,
+      generateMarkdown = true,
+      language = 'zh'
+    } = options;
+
+    logger.info(`Starting iterative search for topic: "${topic}"`);
+    const startTime = Date.now();
+    
+    try {
+      const searchRounds = [];
+      const allResults = [];
+      const screenshots = [];
+      let currentQuery = topic;
+
+      // 执行多轮搜索
+      for (let round = 1; round <= maxRounds; round++) {
+        logger.info(`Starting search round ${round}/${maxRounds} with query: "${currentQuery}"`);
+        
+        const roundStartTime = Date.now();
+        
+        // 执行搜索
+        const roundResults = await this.searchMultipleSources(currentQuery, {
+          maxResults: maxResultsPerRound,
+          language,
+          sources: ['google', 'wikipedia']
+        });
+
+        // 增强结果（获取页面内容）
+        const enhancedResults = await this.enhanceResultsWithContent(roundResults);
+        
+        // 截图处理
+        let roundScreenshots = [];
+        if (includeScreenshots && enhancedResults.length > 0) {
+          roundScreenshots = await this.captureScreenshots(enhancedResults.slice(0, 3), {
+            topic,
+            round
+          });
+        }
+
+        // 分析当前轮次结果
+        const roundAnalysis = await this.analyzeRoundResults(enhancedResults, topic, round);
+        
+        const roundData = {
+          roundNumber: round,
+          query: currentQuery,
+          results: enhancedResults,
+          screenshots: roundScreenshots,
+          keyFindings: roundAnalysis.keyFindings,
+          nextDirection: roundAnalysis.nextDirection,
+          timestamp: new Date(),
+          processingTime: Date.now() - roundStartTime
+        };
+
+        searchRounds.push(roundData);
+        allResults.push(...enhancedResults);
+        screenshots.push(...roundScreenshots);
+
+        // 确定下一轮搜索方向
+        if (round < maxRounds && roundAnalysis.nextDirection) {
+          currentQuery = roundAnalysis.nextQuery || roundAnalysis.nextDirection;
+        }
+
+        logger.info(`Round ${round} completed in ${roundData.processingTime}ms, found ${enhancedResults.length} results`);
+      }
+
+      // 综合分析所有结果
+      const finalAnalysis = await this.geminiService.analyzeSearchResults(allResults, topic);
+      
+      // 生成Markdown报告
+      let markdownReport = null;
+      if (generateMarkdown) {
+        markdownReport = await this.markdownService.generateResearchReport({
+          topic,
+          searchResults: allResults,
+          analysisResult: finalAnalysis,
+          screenshots,
+          rounds: searchRounds
+        });
+      }
+
+      const totalTime = Date.now() - startTime;
+      logger.info(`Iterative search completed in ${totalTime}ms, total results: ${allResults.length}`);
+
+      return {
+        success: true,
+        topic,
+        searchRounds,
+        totalResults: allResults.length,
+        uniqueResults: this.deduplicateResults(allResults),
+        screenshots,
+        analysisResult: finalAnalysis,
+        markdownReport,
+        processingTime: totalTime,
+        timestamp: new Date()
+      };
+
+    } catch (error) {
+      logger.error('Iterative search failed:', error);
+      throw new Error(`Iterative search failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * 分析单轮搜索结果
+   * @param {Array} results - 搜索结果
+   * @param {string} topic - 主题
+   * @param {number} round - 轮次
+   * @returns {Promise<Object>} 分析结果
+   */
+  async analyzeRoundResults(results, topic, round) {
+    try {
+      const prompt = `分析以下搜索结果，并确定下一步搜索方向：
+
+主题: ${topic}
+当前轮次: ${round}
+
+搜索结果:
+${results.map((r, i) => `${i + 1}. ${r.title}\n   ${r.snippet}\n   ${r.url}`).join('\n\n')}
+
+请返回JSON格式的分析结果：
+{
+  "keyFindings": "本轮关键发现（简要概述）",
+  "nextDirection": "下一步搜索方向（如果需要）",
+  "nextQuery": "建议的下一轮搜索查询（如果需要）",
+  "completionReason": "如果认为搜索已足够，说明原因"
+}`;
+
+      const analysisResult = await this.geminiService.model.generateContent(prompt);
+      const response = await analysisResult.response;
+      const text = response.text();
+      
+      try {
+        const parsed = JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim());
+        return parsed;
+      } catch (parseError) {
+        logger.warn('Failed to parse round analysis, using fallback');
+        return {
+          keyFindings: '发现相关信息，需要进一步分析',
+          nextDirection: round < 3 ? `${topic} 详细信息` : null,
+          nextQuery: round < 3 ? `${topic} 详细信息` : null
+        };
+      }
+    } catch (error) {
+      logger.error('Round analysis failed:', error);
+      return {
+        keyFindings: '分析过程中出现错误',
+        nextDirection: null,
+        nextQuery: null
+      };
+    }
+  }
+
+  /**
+   * 批量截图
+   * @param {Array} results - 搜索结果
+   * @param {Object} metadata - 元数据
+   * @returns {Promise<Array>} 截图结果
+   */
+  async captureScreenshots(results, metadata = {}) {
+    const screenshots = [];
+    
+    try {
+      logger.info(`Capturing screenshots for ${results.length} URLs`);
+      
+      for (const result of results) {
+        try {
+          // 生成截图文件名
+          const filename = this.screenshotService.generateScreenshotFilename(result.url);
+          
+          // 截取截图
+          const screenshotBuffer = await this.screenshotService.captureScreenshot(result.url);
+          
+          // 保存截图
+          const savedImage = await this.imageStorage.saveScreenshot(screenshotBuffer, filename, {
+            sourceUrl: result.url,
+            sourceTitle: result.title,
+            sourceDomain: new URL(result.url).hostname,
+            topic: metadata.topic,
+            round: metadata.round,
+            captureTime: new Date()
+          });
+          
+          screenshots.push({
+            ...savedImage,
+            url: result.url,
+            title: result.title,
+            source: result.source
+          });
+          
+        } catch (error) {
+          logger.error(`Screenshot failed for ${result.url}:`, error);
+          // 继续处理其他URL
+        }
+      }
+      
+      logger.info(`Successfully captured ${screenshots.length} screenshots`);
+      return screenshots;
+      
+    } catch (error) {
+      logger.error('Batch screenshot capture failed:', error);
+      return [];
+    }
+  }
+
+  /**
    * 健康检查
    * @returns {Promise<Object>} 各服务状态
    */
   async healthCheck() {
     const checks = {
       google: false,
-      wikipedia: false
+      wikipedia: false,
+      screenshot: false,
+      imageStorage: false,
+      markdown: false
     };
     
     try {
@@ -238,6 +463,15 @@ class SearchService {
     } catch (error) {
       logger.warn('Wikipedia search health check failed:', error.message);
     }
+    
+    try {
+      checks.screenshot = await this.screenshotService.healthCheck();
+    } catch (error) {
+      logger.warn('Screenshot service health check failed:', error.message);
+    }
+    
+    checks.imageStorage = true; // ImageStorageService没有异步依赖
+    checks.markdown = true; // MarkdownService没有异步依赖
     
     return checks;
   }

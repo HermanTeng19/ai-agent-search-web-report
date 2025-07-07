@@ -1,0 +1,60 @@
+{
+  "name": "ai-information-display-expert",
+  "version": "1.0.0",
+  "description": "AI智能体信息展示专家 - 根据用户主题搜索并生成结构化HTML展示",
+  "main": "src/server/index.js",
+  "scripts": {
+    "dev": "nodemon src/server/index.js",
+    "start": "node src/server/index.js",
+    "test": "jest",
+    "test:api": "node scripts/test-api.js",
+    "lint": "eslint src/ --ext .js",
+    "lint:fix": "eslint src/ --ext .js --fix"
+  },
+  "keywords": [
+    "ai",
+    "information",
+    "search",
+    "display",
+    "expert",
+    "gemini",
+    "mongodb",
+    "express"
+  ],
+  "author": "AI Developer",
+  "license": "MIT",
+  "dependencies": {
+    "@google/generative-ai": "^0.17.1",
+    "axios": "^1.6.2",
+    "bull": "^4.12.0",
+    "cheerio": "^1.0.0-rc.12",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "joi": "^17.11.0",
+    "mongoose": "^8.0.3",
+    "redis": "^4.6.11",
+    "uuid": "^9.0.1",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.55.0",
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2",
+    "supertest": "^6.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/username/ai-information-display-expert.git"
+  },
+  "bugs": {
+    "url": "https://github.com/username/ai-information-display-expert/issues"
+  },
+  "homepage": "https://github.com/username/ai-information-display-expert#readme"
+} 
